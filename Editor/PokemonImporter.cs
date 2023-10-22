@@ -28,6 +28,8 @@ namespace P3DS2U.Editor
 {
     public class PokemonImporter : EditorWindow
     {
+        public static int importedPokemonCount = 0;
+
         public const string ImportPath = "Assets/Bin3DS/";
         public const string ExportPath = "Assets/Exported/";
 
@@ -68,6 +70,8 @@ namespace P3DS2U.Editor
                 _processedCount = 0;
                 for (int i = importSettings.ImporterSettings.StartIndex; i <= importSettings.ImporterSettings.EndIndex; i++)
                 {
+                    importedPokemonCount++;
+                    
                     var kvp = scenesDict.ElementAt(i);
                     EditorUtility.ClearProgressBar ();
                     EditorUtility.DisplayProgressBar ("Importing", kvp.Key.Replace (".bin", ""),
@@ -180,6 +184,8 @@ namespace P3DS2U.Editor
                             DestroyImmediate(modelGo);
                     }
                 }
+
+                EditorUtility.DisplayDialog ("Pokemon import Count", "Have imported: " + importedPokemonCount.ToString() + " pokemons.", "ok");
             }
             catch (Exception e) {
                 Debug.LogError ("Something went horribly wrong! Hmu, I'll try to fix it.\n" + e.Message + "\n" +
