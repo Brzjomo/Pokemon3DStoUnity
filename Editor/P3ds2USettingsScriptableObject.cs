@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
 
@@ -410,6 +412,14 @@ namespace P3DS2U.Editor
         {
             ImportInProgress = true;
             PokemonImporter.StartImportingBinaries(this, ScenesDict);
+
+            //test
+            // Task mainTask = Task.Run( () => {
+            //     PokemonImporter.StartImportingBinaries(this, ScenesDict);
+            // });
+
+            // mainTask.Wait();
+
             ImportInProgress = false;
         }
 
