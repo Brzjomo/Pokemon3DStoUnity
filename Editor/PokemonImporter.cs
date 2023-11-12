@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using CurveExtended;
 using P3DS2U.Editor.SPICA;
 using P3DS2U.Editor.SPICA.COLLADA;
@@ -35,8 +33,8 @@ namespace P3DS2U.Editor
         public static string endTime = "";
 
 
-        public const string ImportPath = "Assets/Bin3DS/";
-        public const string ExportPath = "Assets/Exported/";
+        public const string ImportPath = "Assets/GameAssets/Models/ToBeImported/";
+        public const string ExportPath = "Assets/GameAssets/Models/Pokemon/";
 
         private static int _processedCount;
 
@@ -84,74 +82,34 @@ namespace P3DS2U.Editor
 
                     var kvp = scenesDict.ElementAt(i);
                     EditorUtility.ClearProgressBar();
-                    EditorUtility.DisplayCancelableProgressBar("Importing " + importedPokemonCount + " / " + scenesDict.Count, kvp.Key.Replace(".bin", ""), (float)_processedCount / scenesDict.Count);
+                    EditorUtility.DisplayProgressBar("Importing " + importedPokemonCount + " / " + scenesDict.Count, kvp.Key.Replace(".bin", ""),
+                        (float)_processedCount / scenesDict.Count);
 
                     h3DScene = new H3D();
 
-                    // non-Animation
-                    var test = kvp.Value.ToArray();
-                    ParallelLoopResult result = Parallel.ForEach(test, singleFileToBeMerged =>
+                    //Add all non-animation binaries first
+                    foreach (var singleFileToBeMerged in kvp.Value)
                     {
                         var fileType = BinaryUtils.GetBinaryFileType(singleFileToBeMerged);
-
-                        if (fileType == BinaryUtils.FileType.Animation)
-                        {
-                            EditorUtility.DisplayDialog("Debug Info", fileType.ToString(), "ok");
-                            H3DDict<H3DBone> skeleton = null;
-                            if (h3DScene.Models.Count > 0) skeleton = h3DScene.Models[0].Skeleton;
-
-                            var data = FormatIdentifier.IdentifyAndOpen(singleFileToBeMerged, skeleton);
-
-
-                            if (data != null) h3DScene.Merge(data);
-                        }
-                    });
-
-                    //Add all non-animation binaries first
-                    // foreach (var singleFileToBeMerged in kvp.Value)
-                    // {
-                    //     var fileType = BinaryUtils.GetBinaryFileType(singleFileToBeMerged);
-                    //     if (fileType == BinaryUtils.FileType.Animation) continue;
-                    //     H3DDict<H3DBone> skeleton = null;
-                    //     if (h3DScene.Models.Count > 0) skeleton = h3DScene.Models[0].Skeleton;
-                    //     var data = FormatIdentifier.IdentifyAndOpen(singleFileToBeMerged, skeleton);
-                    //     if (data != null) h3DScene.Merge(data);
-                    // }
+                        if (fileType == BinaryUtils.FileType.Animation) continue;
+                        H3DDict<H3DBone> skeleton = null;
+                        if (h3DScene.Models.Count > 0) skeleton = h3DScene.Models[0].Skeleton;
+                        var data = FormatIdentifier.IdentifyAndOpen(singleFileToBeMerged, skeleton);
+                        if (data != null) h3DScene.Merge(data);
+                    }
 
                     int animFilesCount = 0;
                     //Merge animation binaries
-
-                    // Animation
-                    ParallelLoopResult result1 = Parallel.ForEach(test, singleFileToBeMerged =>
+                    foreach (var singleFileToBeMerged in kvp.Value)
                     {
                         var fileType = BinaryUtils.GetBinaryFileType(singleFileToBeMerged);
-
-                        if (fileType != BinaryUtils.FileType.Animation)
-                        {
-                            EditorUtility.DisplayDialog("Debug Info", fileType.ToString(), "ok");
-                            H3DDict<H3DBone> skeleton = null;
-                            if (h3DScene.Models.Count > 0) skeleton = h3DScene.Models[0].Skeleton;
-
-                            var data = FormatIdentifier.IdentifyAndOpen(singleFileToBeMerged, skeleton, animFilesCount);
-
-                            animFilesCount++;
-                            if (data != null) h3DScene.Merge(data);
-                        }
-                    });
-
-                    // Original
-                    // foreach (var singleFileToBeMerged in kvp.Value)
-                    // {
-                    //     var fileType = BinaryUtils.GetBinaryFileType(singleFileToBeMerged);
-                    //     if (fileType != BinaryUtils.FileType.Animation) continue;
-                    //     H3DDict<H3DBone> skeleton = null;
-                    //     if (h3DScene.Models.Count > 0) skeleton = h3DScene.Models[0].Skeleton;
-
-                    //     var data = FormatIdentifier.IdentifyAndOpen(singleFileToBeMerged, skeleton, animFilesCount);
-
-                    //     animFilesCount++;
-                    //     if (data != null) h3DScene.Merge(data);
-                    // }
+                        if (fileType != BinaryUtils.FileType.Animation) continue;
+                        H3DDict<H3DBone> skeleton = null;
+                        if (h3DScene.Models.Count > 0) skeleton = h3DScene.Models[0].Skeleton;
+                        var data = FormatIdentifier.IdentifyAndOpen(singleFileToBeMerged, skeleton, animFilesCount);
+                        animFilesCount++;
+                        if (data != null) h3DScene.Merge(data);
+                    }
 
                     var combinedExportFolder = ExportPath + kvp.Key.Replace(".bin", "") + "/Files/";
                     if (!Directory.Exists(combinedExportFolder))
